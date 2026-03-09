@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IYS Content Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --indigo: #5b4dff; --mint: #2dd4bf; --dark: #1e293b;
+      --text: #334155; --muted: #64748b; --border: #e2e8f0;
+      --bg: #f8fafc; --white: #ffffff; --radius: 12px;
+      --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+    }
+    body { font-family: Inter, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+    /* ── Login ── */
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: var(--bg); }
+    .login-card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(15,23,42,.07); }
+    .login-mark { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, var(--indigo), var(--mint)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 15px; margin: 0 auto 1.2rem; }
+    .login-card h1 { font-size: 1.4rem; font-weight: 800; text-align: center; margin-bottom: .25rem; color: var(--dark); }
+    .login-card .sub { color: var(--muted); font-size: .88rem; text-align: center; margin-bottom: 1.8rem; }
+    .field { margin-bottom: .9rem; }
+    .field label { display: block; font-size: .78rem; font-weight: 700; color: var(--muted); margin-bottom: .3rem; letter-spacing: .04em; text-transform: uppercase; }
+    .field input { width: 100%; padding: .7rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-size: .95rem; font-family: Inter, sans-serif; color: var(--dark); background: var(--white); outline: none; transition: border-color .15s; }
+    .field input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(91,77,255,.08); }
+    .field .hint { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
+    .btn-login { width: 100%; padding: .85rem; background: var(--indigo); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: Inter, sans-serif; margin-top: .5rem; transition: background .15s; }
+    .btn-login:hover { background: #4c40db; }
+    .login-err { color: var(--red); font-size: .82rem; margin-top: .6rem; text-align: center; display: none; }
+    .setup-toggle { text-align: center; margin-top: 1rem; }
+    .setup-toggle a { font-size: .82rem; color: var(--indigo); cursor: pointer; text-decoration: underline; }
+    #setup-fields { display: none; border-top: 1px solid var(--border); margin-top: 1.2rem; padding-top: 1.2rem; }
+    #setup-fields .setup-note { font-size: .78rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5; }
+
+    /* ── App ── */
+    #app { display: none; min-height: 100vh; }
+
+    /* ── Header ── */
+    .header { background: var(--white); border-bottom: 1px solid var(--border); padding: .85rem 0; position: sticky; top: 0; z-index: 50; }
+    .header-inner { max-width: 900px; margin: 0 auto; padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .header-logo { display: flex; align-items: center; gap: .6rem; }
+    .header-mark { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--indigo), var(--mint)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 10px; flex-shrink: 0; }
+    .header-title { font-weight: 800; font-size: .95rem; color: var(--dark); }
+    .header-title span { color: var(--indigo); }
+    .header-sub { font-size: .72rem; color: var(--muted); }
+    .header-right { display: flex; align-items: center; gap: .6rem; }
+    .save-indicator { font-size: .75rem; color: var(--green); display: none; }
+
+    /* ── Tabs ── */
+    .tabs { max-width: 900px; margin: 0 auto; padding: 1rem 1.25rem 0; display: flex; gap: .25rem; border-bottom: 1px solid var(--border); }
+    .tab { padding: .55rem 1rem; border-radius: 8px 8px 0 0; font-size: .85rem; font-weight: 600; cursor: pointer; color: var(--muted); border: none; background: transparent; font-family: Inter, sans-serif; transition: color .15s; }
+    .tab.active { color: var(--indigo); background: rgba(91,77,255,.07); border-bottom: 2px solid var(--indigo); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Page wrapper ── */
+    .page { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+    /* ── Buttons ── */
+    .btn { padding: .55rem 1rem; border-radius: 8px; font-size: .85rem; font-weight: 700; cursor: pointer; border: none; font-family: Inter, sans-serif; transition: opacity .15s; display: inline-flex; align-items: center; gap: .4rem; }
+    .btn:hover { opacity: .82; }
+    .btn-primary { background: var(--indigo); color: #fff; }
+    .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--indigo); color: var(--indigo); opacity: 1; }
+    .btn-mint { background: rgba(45,212,191,.12); color: #0d9488; border: 1px solid rgba(45,212,191,.3); }
+    .btn-danger { background: rgba(239,68,68,.08); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+    .btn-lg { padding: .8rem 1.5rem; font-size: .95rem; border-radius: 10px; }
+    .btn[disabled] { opacity: .4; cursor: not-allowed; }
+
+    /* ── Brief form ── */
+    .brief-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 1.25rem; }
+    .brief-top { height: 4px; background: linear-gradient(90deg, var(--indigo), var(--mint)); }
+    .brief-body { padding: 1.25rem; }
+    .brief-label { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem; display: block; }
+    .brief-input { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: .85rem 1rem; font-size: 1rem; font-family: Inter, sans-serif; color: var(--dark); resize: vertical; min-height: 90px; outline: none; transition: border-color .15s; line-height: 1.6; }
+    .brief-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(91,77,255,.07); }
+    .brief-meta { display: flex; gap: .75rem; margin-top: .75rem; flex-wrap: wrap; }
+    .brief-select { flex: 1; min-width: 160px; padding: .6rem .85rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: .88rem; font-family: Inter, sans-serif; color: var(--dark); background: var(--white); outline: none; cursor: pointer; }
+    .brief-select:focus { border-color: var(--indigo); }
+    .brief-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+    .char-count { font-size: .75rem; color: var(--muted); }
+
+    /* ── Content output ── */
+    .content-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 1rem; }
+    .content-card-bar { height: 4px; background: linear-gradient(90deg, var(--mint), var(--indigo)); }
+    .content-card-body { padding: 1.25rem; }
+    .content-section { margin-bottom: 1.25rem; }
+    .content-section:last-child { margin-bottom: 0; }
+    .section-label { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem; }
+    .section-label .pill { background: rgba(91,77,255,.08); color: var(--indigo); border-radius: 99px; padding: .1rem .5rem; font-size: .68rem; }
+    .editable { border: 1.5px solid transparent; border-radius: 8px; padding: .6rem .75rem; font-size: .9rem; font-family: Inter, sans-serif; color: var(--dark); outline: none; width: 100%; background: var(--bg); line-height: 1.6; transition: border-color .15s; resize: vertical; }
+    .editable:focus { border-color: var(--indigo); background: var(--white); box-shadow: 0 0 0 3px rgba(91,77,255,.06); }
+    .headline-edit { font-size: 1.1rem; font-weight: 700; min-height: 2.5rem; }
+    .slides-grid { display: grid; gap: .5rem; }
+    .slide-row { display: flex; gap: .6rem; align-items: flex-start; }
+    .slide-num { flex-shrink: 0; width: 24px; height: 24px; background: var(--indigo); color: #fff; border-radius: 99px; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 800; margin-top: .5rem; }
+    .slide-edit { flex: 1; min-height: 2.5rem; }
+    .caption-edit { min-height: 80px; }
+    .hashtag-edit { min-height: 2.5rem; font-size: .82rem; color: var(--indigo); }
+
+    .save-row { display: flex; gap: .6rem; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .save-note { font-size: .75rem; color: var(--muted); margin-left: auto; }
+    #save-status { font-size: .82rem; font-weight: 600; }
+
+    /* ── Empty / loading states ── */
+    .empty { text-align: center; padding: 3rem 1.5rem; color: var(--muted); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+    .empty p { font-size: .9rem; line-height: 1.6; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(91,77,255,.2); border-top-color: var(--indigo); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Chat panel ── */
+    .chat-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 520px; }
+    .chat-header { padding: .9rem 1.1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .6rem; }
+    .chat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .chat-title { font-weight: 700; font-size: .9rem; }
+    .chat-msgs { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .75rem; }
+    .msg { max-width: 85%; padding: .7rem .95rem; border-radius: 14px; font-size: .88rem; line-height: 1.65; }
+    .msg.user { align-self: flex-end; background: var(--indigo); color: #fff; border-radius: 14px 14px 4px 14px; }
+    .msg.assistant { align-self: flex-start; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 14px 14px 14px 4px; }
+    .msg.thinking { align-self: flex-start; color: var(--muted); font-style: italic; font-size: .83rem; background: transparent; padding: .4rem 0; }
+    .chat-input-row { display: flex; gap: .5rem; padding: .75rem; border-top: 1px solid var(--border); }
+    .chat-input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: .6rem .85rem; font-size: .88rem; font-family: Inter, sans-serif; outline: none; resize: none; max-height: 100px; overflow-y: auto; line-height: 1.5; transition: border-color .15s; }
+    .chat-input:focus { border-color: var(--indigo); }
+
+    /* ── Queue ── */
+    .queue-item { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: .75rem; }
+    .queue-bar { height: 3px; }
+    .queue-bar.pending { background: linear-gradient(90deg, var(--indigo), var(--mint)); }
+    .queue-bar.posted { background: linear-gradient(90deg, var(--green), var(--mint)); }
+    .queue-body { padding: 1rem 1.1rem; }
+    .queue-headline { font-size: .95rem; font-weight: 700; margin-bottom: .25rem; }
+    .queue-date { font-size: .73rem; color: var(--muted); margin-bottom: .5rem; }
+    .queue-caption { font-size: .82rem; color: var(--muted); line-height: 1.6; max-height: 3.5em; overflow: hidden; }
+    .queue-footer { display: flex; align-items: center; justify-content: space-between; margin-top: .75rem; padding-top: .65rem; border-top: 1px solid var(--border); }
+    .badge { display: inline-flex; align-items: center; gap: .25rem; padding: .2rem .65rem; border-radius: 99px; font-size: .72rem; font-weight: 700; }
+    .badge-pending { background: rgba(91,77,255,.1); color: var(--indigo); }
+    .badge-posted { background: rgba(34,197,94,.1); color: #16a34a; }
+    .queue-actions { display: flex; gap: .4rem; }
+
+    /* ── Chips ── */
+    .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+    .chip { background: rgba(91,77,255,.07); border: 1px solid rgba(91,77,255,.15); color: var(--indigo); border-radius: 99px; padding: .28rem .75rem; font-size: .78rem; cursor: pointer; font-family: Inter, sans-serif; transition: background .15s; }
+    .chip:hover { background: rgba(91,77,255,.14); }
+
+    /* ── Misc ── */
+    .divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); font-size: .78rem; font-weight: 600; margin: 1.25rem 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .section-title { font-size: 1rem; font-weight: 800; color: var(--dark); margin-bottom: 1rem; }
+
+    @media(max-width:600px) {
+      .brief-meta { flex-direction: column; }
+      .brief-select { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-mark">IYS</div>
+    <h1>Content Studio</h1>
+    <p class="sub">ImproveYourSite — Social Media</p>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="pw" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <button class="btn-login" onclick="doLogin()">Sign in</button>
+    <div class="login-err" id="login-err">Incorrect password</div>
+
+    <div class="setup-toggle">
+      <a onclick="toggleSetup()">First time? Set up API keys</a>
+    </div>
+
+    <div id="setup-fields">
+      <p class="setup-note">Your API keys are stored only in this browser session — never sent anywhere except directly to Anthropic and GitHub.</p>
+      <div class="field">
+        <label>Anthropic API Key</label>
+        <input type="password" id="setup-ant" placeholder="sk-ant-api03-...">
+        <div class="hint">Get yours at console.anthropic.com</div>
+      </div>
+      <div class="field">
+        <label>GitHub Token (PAT)</label>
+        <input type="password" id="setup-gh" placeholder="ghp_...">
+        <div class="hint">Needs repo write access to anon8597299/smart-tech-innovations</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── App ───────────────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <div class="header-mark">IYS</div>
+        <div>
+          <div class="header-title">Improve<span>YourSite</span></div>
+          <div class="header-sub">Content Studio</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="save-indicator" id="save-indicator">Saved</span>
+        <button class="btn btn-ghost" style="font-size:.78rem;" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('create')">Create Post</button>
+    <button class="tab" onclick="showTab('chat')">Ideas Chat</button>
+    <button class="tab" onclick="showTab('queue')">Queue <span id="queue-count" style="background:rgba(91,77,255,.1);color:var(--indigo);border-radius:99px;padding:.05rem .45rem;font-size:.72rem;margin-left:.25rem;"></span></button>
+  </div>
+
+  <!-- ── Create Post ────────────────────────────────────────────────────── -->
+  <div class="tab-panel active page" id="panel-create">
+
+    <div class="brief-card">
+      <div class="brief-top"></div>
+      <div class="brief-body">
+        <span class="brief-label">What's this post about?</span>
+        <textarea class="brief-input" id="brief" placeholder="e.g. Why tradies are losing customers to competitors with better websites — talk about how word of mouth isn't enough anymore and we can fix it for $3k"></textarea>
+
+        <div class="brief-meta">
+          <select class="brief-select" id="industry">
+            <option value="general">General small business</option>
+            <option value="trades">Trades — plumbing, electrical</option>
+            <option value="healthcare">Healthcare — GP, physio, dental</option>
+            <option value="accounting">Accounting / bookkeeping</option>
+            <option value="solar">Solar / energy</option>
+            <option value="consulting">Business consulting</option>
+            <option value="retail">Retail / boutique</option>
+            <option value="hospitality">Hospitality / events</option>
+            <option value="beauty">Beauty / hair</option>
+            <option value="cleaning">Cleaning / pest control</option>
+          </select>
+          <select class="brief-select" id="theme">
+            <option value="education">Education — tip or how-to</option>
+            <option value="pain_point">Pain point — what's costing them</option>
+            <option value="social_proof">Social proof — results / before&after</option>
+            <option value="value">Value — why IYS over others</option>
+            <option value="cta">CTA — book a call / limited spots</option>
+            <option value="regional">Regional Australia focus</option>
+            <option value="ai_search">AI search — get found by ChatGPT</option>
+          </select>
+        </div>
+
+        <div class="chips" id="idea-chips">
+          <span class="chip" onclick="useBrief('Why tradies are losing jobs to competitors with better websites')">Tradies losing jobs</span>
+          <span class="chip" onclick="useBrief('Why your phone isn\'t ringing — 4 website mistakes killing your enquiries')">Why your phone isn't ringing</span>
+          <span class="chip" onclick="useBrief('Regional Australian businesses are invisible online and don\'t know it')">Regional businesses invisible online</span>
+          <span class="chip" onclick="useBrief('Your competitor just quoted $15K+? Here\'s what we charge')">$15K competitor comparison</span>
+          <span class="chip" onclick="useBrief('The automated blog we build into every site — why it matters for Google')">Automated blog difference</span>
+          <span class="chip" onclick="useBrief('What a converting website actually looks like — 5 things it must have')">What converts visitors</span>
+        </div>
+
+        <div class="brief-actions">
+          <button class="btn btn-primary btn-lg" id="gen-btn" onclick="generatePost()">
+            <span id="gen-btn-text">Generate post</span>
+          </button>
+          <span class="char-count" id="char-count">0 / 300</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div id="output-area" style="display:none;">
+      <div class="content-card">
+        <div class="content-card-bar"></div>
+        <div class="content-card-body">
+
+          <div class="content-section">
+            <div class="section-label">Headline <span class="pill">Cover slide hook</span></div>
+            <textarea class="editable headline-edit" id="out-headline" rows="1" oninput="autoResize(this)"></textarea>
+          </div>
+
+          <div class="content-section">
+            <div class="section-label">Slides <span class="pill">5 slides</span></div>
+            <div class="slides-grid" id="slides-grid"></div>
+          </div>
+
+          <div class="content-section">
+            <div class="section-label">Caption</div>
+            <textarea class="editable caption-edit" id="out-caption" rows="4"></textarea>
+          </div>
+
+          <div class="content-section">
+            <div class="section-label">Hashtags <span class="pill">5–8 max</span></div>
+            <textarea class="editable hashtag-edit" id="out-hashtags" rows="2"></textarea>
+          </div>
+
+          <div class="save-row">
+            <button class="btn btn-primary btn-lg" id="save-btn" onclick="saveToQueue()">Save to Queue</button>
+            <button class="btn btn-ghost" onclick="generatePost()">Regenerate</button>
+            <button class="btn btn-ghost" onclick="resetCreate()">Clear</button>
+            <span id="save-status" class="save-note"></span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div id="gen-empty" class="empty">
+      <div class="empty-icon">✍️</div>
+      <p>Describe what you want the post to be about,<br>choose the industry and theme, then hit Generate.</p>
+    </div>
+
+  </div>
+
+  <!-- ── Ideas Chat ─────────────────────────────────────────────────────── -->
+  <div class="tab-panel page" id="panel-chat">
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Use this to brainstorm, refine ideas, or ask for caption alternatives. When you're ready, go back to <strong>Create Post</strong> to generate the full carousel.</p>
+    <div class="chat-wrap">
+      <div class="chat-header">
+        <div class="chat-dot"></div>
+        <div class="chat-title">IYS Content Assistant</div>
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:.75rem;padding:.35rem .7rem;" onclick="clearChat()">Clear</button>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg assistant">
+          Hey! I'm your IYS content assistant.<br><br>
+          I know the business — packages at $3k, $5k, $10k, all 8 demo sites, the automated blog differentiator, and the Australian small business audience. Tell me what you want to post about and I'll help you shape it.
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chat-input" rows="1" placeholder="What do you want to create today?"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+        <button class="btn btn-primary" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Queue ──────────────────────────────────────────────────────────── -->
+  <div class="tab-panel page" id="panel-queue">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <div class="section-title" style="margin-bottom:0;">Post Queue</div>
+      <button class="btn btn-ghost" onclick="loadQueue()">Refresh</button>
+    </div>
+    <div id="queue-list"><div class="empty"><div class="empty-icon">📭</div><p>Loading queue…</p></div></div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+const REPO    = 'anon8597299/smart-tech-innovations';
+const QUEUE   = 'social/upload_queue.json';
+// Password hash — default: 'iyscreate'  (SHA-256)
+const PW_HASH = '2d5ffd955e59c05aa9062b78617d959346c69c365cc1ac3f274b68605d346547';
+
+let antKey  = '';
+let ghPat   = '';
+let allPosts = [];
+let chatHistory = [];
+let generatedPost = null;
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doLogin() {
+  const pw   = document.getElementById('pw').value;
+  const hash = await sha256(pw);
+  if (hash !== PW_HASH) {
+    const el = document.getElementById('login-err');
+    el.style.display = 'block';
+    el.textContent = 'Incorrect password';
+    document.getElementById('pw').value = '';
+    return;
+  }
+
+  // Pick up saved keys
+  antKey = sessionStorage.getItem('iys_ant') || document.getElementById('setup-ant')?.value.trim() || '';
+  ghPat  = sessionStorage.getItem('iys_gh')  || document.getElementById('setup-gh')?.value.trim()  || '';
+
+  // Prompt if missing
+  if (!antKey) antKey = prompt('Paste your Anthropic API key (sk-ant-...):') || '';
+  if (!ghPat)  ghPat  = prompt('Paste your GitHub token (ghp_...):') || '';
+
+  if (antKey) sessionStorage.setItem('iys_ant', antKey);
+  if (ghPat)  sessionStorage.setItem('iys_gh',  ghPat);
+
+  sessionStorage.setItem('iys_studio_auth', '1');
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  init();
+}
+
+function doLogout() {
+  sessionStorage.clear();
+  location.reload();
+}
+
+function toggleSetup() {
+  const el = document.getElementById('setup-fields');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function init() {
+  loadQueue();
+  document.getElementById('brief').addEventListener('input', function() {
+    document.getElementById('char-count').textContent = `${this.value.length} / 300`;
+  });
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const idx = ['create','chat','queue'].indexOf(name);
+  if (idx >= 0) tabs[idx].classList.add('active');
+  if (name === 'queue') loadQueue();
+}
+
+// ── Queue ──────────────────────────────────────────────────────────────────
+async function loadQueue() {
+  try {
+    const headers = {};
+    if (ghPat) headers['Authorization'] = `token ${ghPat}`;
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${QUEUE}?t=${Date.now()}`, { headers });
+    allPosts = r.ok ? await r.json() : [];
+    renderQueue();
+    const pending = allPosts.filter(p => p.status === 'pending').length;
+    const el = document.getElementById('queue-count');
+    if (el) el.textContent = pending || '';
+  } catch { allPosts = []; renderQueue(); }
+}
+
+function renderQueue() {
+  const el = document.getElementById('queue-list');
+  if (!allPosts.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No posts in the queue yet.</p></div>';
+    return;
+  }
+  el.innerHTML = [...allPosts].reverse().map((p, i) => {
+    const idx = allPosts.length - 1 - i;
+    const barCls = p.status === 'posted' ? 'posted' : 'pending';
+    const badge  = p.status === 'posted'
+      ? '<span class="badge badge-posted">Posted</span>'
+      : '<span class="badge badge-pending">Pending</span>';
+    const cap = (p.caption || '').split('\n')[0].slice(0, 120);
+    return `<div class="queue-item">
+      <div class="queue-bar ${barCls}"></div>
+      <div class="queue-body">
+        <div class="queue-headline">${esc(p.headline || 'Untitled')}</div>
+        <div class="queue-date">${esc(p.date || '')}</div>
+        <div class="queue-caption">${esc(cap)}</div>
+        <div class="queue-footer">
+          ${badge}
+          <div class="queue-actions">
+            ${p.status === 'pending' ? `<button class="btn btn-ghost" style="font-size:.75rem;padding:.3rem .65rem;" onclick="deletePost(${idx})">Remove</button>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deletePost(idx) {
+  if (!confirm('Remove this post from the queue?')) return;
+  allPosts.splice(idx, 1);
+  await githubPut(QUEUE, allPosts, 'Remove post from queue');
+  renderQueue();
+}
+
+// ── GitHub API ─────────────────────────────────────────────────────────────
+async function githubPut(path, content, message) {
+  if (!ghPat) throw new Error('GitHub token not set — sign out and back in.');
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+  let sha = null;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+      headers: { Authorization: `token ${ghPat}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (r.ok) { const d = await r.json(); sha = d.sha; }
+  } catch {}
+  const body = { message, content: b64, ...(sha ? { sha } : {}) };
+  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${ghPat}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const d = await r.json(); throw new Error(d.message || 'GitHub write failed'); }
+}
+
+// ── Generate post ──────────────────────────────────────────────────────────
+const SYSTEM = `You write Instagram carousel content for ImproveYourSite.com, an Australian web agency.
+
+Business context:
+- James Burke runs it. Packages: Scan & Fix $3,000 | Complete Build $5,000 | Premium Growth $10,000
+- Key differentiator: every site includes an automated blog that keeps the business ranking on Google
+- 8 demo sites: trades, healthcare, finance, retail, solar, hospitality, consulting, accounting
+- Target: Australian small business owners 35–55, time-poor, skeptical, treat them like intelligent adults
+- Contact: hello@improveyoursite.com | improveyoursite.com | 0432 268 865
+- Booking: improveyoursite.com/book
+
+Tone rules:
+- Direct, plain English — no corporate speak, no em-dashes, no excessive exclamation marks
+- Specific numbers beat vague claims every time
+- Local references land well (regional NSW, Bathurst, Orange, etc.)
+- Never talk down to the reader
+- Lead with the problem they recognise, then show the solution
+
+Return ONLY valid JSON, no markdown fences:
+{
+  "headline": "Hook under 8 words — stops the scroll",
+  "slides": [
+    "Slide 1 text — max 15 words, punchy",
+    "Slide 2 text",
+    "Slide 3 text",
+    "Slide 4 text",
+    "Slide 5 text — ends with clear direction"
+  ],
+  "caption": "2-4 sentences. Conversational. Ends with a CTA. No hashtags in here.",
+  "hashtags": "#tag1 #tag2 #tag3 #tag4 #tag5 #tag6"
+}
+
+Hashtag rules: 5–8 max. Always include 2-3 location tags from: #smallbusinessaustralia #australianbusiness #seoaustralia #sydneybusiness #melbournebusiness #brisbanebusiness #regionalaustralia`;
+
+async function generatePost() {
+  if (!antKey) { alert('Anthropic API key not set. Sign out and back in.'); return; }
+
+  const brief    = document.getElementById('brief').value.trim();
+  const industry = document.getElementById('industry').value;
+  const theme    = document.getElementById('theme').value;
+
+  if (!brief) { document.getElementById('brief').focus(); return; }
+
+  const btn  = document.getElementById('gen-btn');
+  const text = document.getElementById('gen-btn-text');
+  btn.disabled = true;
+  text.innerHTML = '<span class="spinner"></span> Generating…';
+  document.getElementById('gen-empty').style.display = 'none';
+  document.getElementById('output-area').style.display = 'none';
+
+  const prompt = `Brief: ${brief}\nIndustry focus: ${industry}\nTheme: ${theme}\nDate: ${new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': antKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 900, system: SYSTEM, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || `API ${r.status}`);
+
+    let raw = data.content[0].text.trim();
+    if (raw.startsWith('```')) { raw = raw.replace(/^```json?\n?/, '').replace(/\n?```$/, ''); }
+    generatedPost = JSON.parse(raw.trim());
+    renderOutput(generatedPost);
+  } catch (e) {
+    document.getElementById('gen-empty').style.display = 'block';
+    document.getElementById('gen-empty').innerHTML = `<div class="empty-icon">⚠️</div><p>Error: ${esc(e.message)}</p>`;
+  }
+
+  btn.disabled = false;
+  text.textContent = 'Generate post';
+}
+
+function renderOutput(post) {
+  document.getElementById('out-headline').value = post.headline || '';
+  autoResize(document.getElementById('out-headline'));
+
+  const grid = document.getElementById('slides-grid');
+  grid.innerHTML = (post.slides || []).map((s, i) =>
+    `<div class="slide-row">
+      <div class="slide-num">${i + 1}</div>
+      <textarea class="editable slide-edit" rows="2" oninput="autoResize(this)">${esc(s)}</textarea>
+    </div>`
+  ).join('');
+  grid.querySelectorAll('textarea').forEach(autoResize);
+
+  document.getElementById('out-caption').value = post.caption || '';
+  document.getElementById('out-hashtags').value = post.hashtags || '';
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('output-area').style.display = 'block';
+  document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Save to queue ──────────────────────────────────────────────────────────
+async function saveToQueue() {
+  const headline  = document.getElementById('out-headline').value.trim();
+  const caption   = document.getElementById('out-caption').value.trim();
+  const hashtags  = document.getElementById('out-hashtags').value.trim();
+  const slideEls  = document.querySelectorAll('.slide-edit');
+  const slides    = Array.from(slideEls).map(el => el.value.trim()).filter(Boolean);
+
+  if (!headline) { alert('Headline is empty.'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  document.getElementById('save-status').textContent = '';
+
+  try {
+    await loadQueue(); // get latest to avoid overwrite conflict
+    const entry = {
+      date: new Date().toISOString().split('T')[0],
+      headline,
+      slides,
+      caption: caption + (hashtags ? '\n\n' + hashtags : ''),
+      status: 'pending',
+      created_by: 'content-studio',
+    };
+    allPosts.push(entry);
+    await githubPut(QUEUE, allPosts, `Add post: ${headline}`);
+
+    document.getElementById('save-status').textContent = 'Saved to queue!';
+    document.getElementById('save-status').style.color = 'var(--green)';
+
+    const ind = document.getElementById('save-indicator');
+    ind.style.display = 'inline';
+    setTimeout(() => { ind.style.display = 'none'; }, 3000);
+
+    const el = document.getElementById('queue-count');
+    const pending = allPosts.filter(p => p.status === 'pending').length;
+    if (el) el.textContent = pending || '';
+
+  } catch (e) {
+    document.getElementById('save-status').textContent = 'Error: ' + e.message;
+    document.getElementById('save-status').style.color = 'var(--red)';
+    allPosts.pop();
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save to Queue';
+}
+
+function resetCreate() {
+  document.getElementById('brief').value = '';
+  document.getElementById('char-count').textContent = '0 / 300';
+  document.getElementById('output-area').style.display = 'none';
+  document.getElementById('gen-empty').style.display = 'block';
+  document.getElementById('gen-empty').innerHTML = '<div class="empty-icon">✍️</div><p>Describe what you want the post to be about,<br>choose the industry and theme, then hit Generate.</p>';
+  generatedPost = null;
+}
+
+function useBrief(text) {
+  document.getElementById('brief').value = text;
+  document.getElementById('char-count').textContent = `${text.length} / 300`;
+  document.getElementById('brief').focus();
+}
+
+// ── Chat ───────────────────────────────────────────────────────────────────
+const CHAT_SYS = `You are the IYS content assistant for ImproveYourSite.com. Help brainstorm and refine Instagram carousel ideas.
+
+Business: James Burke. Packages $3k / $5k / $10k. Key differentiator: automated blog on every site.
+Audience: Australian small business owners — tradies, GP clinics, accountants, consultants, retail.
+Tone: direct, plain English, no buzzwords. Specific beats vague.
+
+Help the user come up with strong hooks, angles, and ideas. Keep replies short and conversational.
+When they have a good idea, encourage them to go to the Create Post tab to generate the full carousel.`;
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || !antKey) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  appendMsg('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+  appendMsg('thinking', 'Thinking…');
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': antKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, system: CHAT_SYS, messages: chatHistory.slice(-16) })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || `API ${r.status}`);
+    const reply = data.content[0].text;
+    chatHistory.push({ role: 'assistant', content: reply });
+    removeThinking();
+    appendMsg('assistant', reply);
+  } catch (e) {
+    removeThinking();
+    appendMsg('assistant', 'Error: ' + e.message);
+  }
+}
+
+function appendMsg(role, text) {
+  const box = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  if (role === 'thinking') { div.id = 'thinking-msg'; }
+  div.innerHTML = esc(text).replace(/\n/g, '<br>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+function removeThinking() { document.getElementById('thinking-msg')?.remove(); }
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('chat-msgs').innerHTML = '<div class="msg assistant">Chat cleared. What do you want to create?</div>';
+}
+
+// ── Utils ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── Startup ─────────────────────────────────────────────────────────────────
+if (sessionStorage.getItem('iys_studio_auth') === '1') {
+  antKey = sessionStorage.getItem('iys_ant') || '';
+  ghPat  = sessionStorage.getItem('iys_gh')  || '';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  init();
+}
+</script>
+</body>
+</html>
